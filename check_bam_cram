@@ -1,0 +1,33 @@
+check_bam_cram() {
+    local file="$1"
+    echo "=== BAM/CRAM VALIDATION ==="
+    
+    # Original header check
+    local tmp_header
+    tmp_header=$(mktemp)
+    samtools view -H "$file" | head -n 500 > "$tmp_header"
+    
+    if ! grep -q -m1 -E '^@HD|^@SQ' "$tmp_header"; then
+        echo "ERROR: Invalid BAM/CRAM header"
+        exit 1
+    fi
+
+    # CRAM-specific check
+    if [[ "$file" == *.cram* ]]; then
+        if ! grep -q 'M5:' "$tmp_header"; then
+            echo "WARNING: Missing M5 tags in CRAM header"
+        fi
+    else # BAM-specific check
+        local tmp_tail
+        tmp_tail=$(mktemp)
+        tail -c $TAIL_SIZE "$file" > "$tmp_tail"
+        
+        if ! xxd -p "$tmp_tail" | grep -iq '42430200'; then
+            echo "ERROR: Missing BAM EOF marker"
+            exit 1
+        fi
+        rm -f "$tmp_tail"
+    fi
+    
+    rm -f "$tmp_header"
+}
