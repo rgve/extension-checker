@@ -14,7 +14,8 @@
 #
 # Exit status
 #   • Any [ERROR] message terminates execution immediately (set -e).
-#   • [WARNING] messages report non-fatal issues or missing optional software.
+#   • [WARNING] messages report non-fatal issues.
+#   • [FAIL] messages report missing software.
 #   • [OK] messages indicate that the file passed the implemented checks.
 #
 # ---------------------------------------------------------------------------
@@ -40,14 +41,21 @@ check_fastq() {
         *)     head    -n "$FASTQ_LINES" "$f"         > "$tmp" ;;
     esac
 
-    if command -v fastQValidator >/dev/null; then
-        fastQValidator --file "$tmp" --maxErrors 1 --disableSeqIDCheck
+    if ! command -v fastQValidator >/dev/null; then
+        echo "  [FAIL] fastQValidator not found; FASTQ validation skipped."        rm -f "$tmp"
+        return
+    fi
+
+    if fastQValidator --file "$tmp" --maxErrors 1 --disableSeqIDCheck; then
         echo "  [OK] fastQValidator completed without critical errors."
     else
-        echo "  [WARNING] fastQValidator not found; FASTQ validation skipped."
+        echo "  [ERROR] fastQValidator reported format problems."
+        rm -f "$tmp"
+        exit 1
     fi
     rm -f "$tmp"
 }
+
 
 ##############################################################################
 # BAM
@@ -57,8 +65,7 @@ check_bam() {
     echo "[BAM] $f"
 
     if ! command -v samtools >/dev/null; then
-        echo "  [WARNING] samtools not found; BAM validation skipped."
-        return
+        echo "  [FAIL] samtools not found; BAM validation skipped."        return
     fi
 
     # Header presence
@@ -88,8 +95,7 @@ check_cram() {
     echo "[CRAM] $f"
 
     if ! command -v samtools >/dev/null; then
-        echo "  [WARNING] samtools not found; CRAM validation skipped."
-        return
+        echo "  [FAIL] samtools not found; CRAM validation skipped."        return
     fi
 
     # Header presence
@@ -114,8 +120,7 @@ check_vcf() {
     echo "[VCF/BCF] $f"
 
     if ! command -v bcftools >/dev/null; then
-        echo "  [WARNING] bcftools not found; VCF/BCF validation skipped."
-        return
+        echo "  [FAIL] bcftools not found; VCF/BCF validation skipped."        return
     fi
 
     if bcftools head -n "$VCF_RECORDS" "$f" > /dev/null 2>&1; then
@@ -131,8 +136,7 @@ check_vcf() {
 ##############################################################################
 for file in "$@"; do
     if [[ ! -f "$file" ]]; then
-        echo "[WARNING] '$file' not found; skipping."
-        continue
+        echo "[FAIL] '$file' not found; skipping."        continue
     fi
 
     case "$file" in
@@ -145,8 +149,7 @@ for file in "$@"; do
         *.vcf|*.vcf.gz|*.bcf|*.bcf.gz|*.vcf.bz2|*.bcf.bz2)
             check_vcf "$file" ;;
         *)
-            echo "[WARNING] '$file' has an unsupported extension; skipping." ;;
-    esac
+            echo "[FAIL] '$file' has an unsupported extension; skipping." ;;    esac
 
     echo
 done
