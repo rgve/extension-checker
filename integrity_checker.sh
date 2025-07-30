@@ -9,7 +9,7 @@
 #   • BAM   : inspect the first 500 header lines and verify the BAM EOF marker
 #   • CRAM  : inspect the first 500 header lines and report missing reference
 #             MD5 (M5) tags
-#   • VCF po : parse the header plus the first 10 000 variant records with
+#   • VCF   : parse the header plus the first 10 000 variant records with
 #             bcftools head
 #
 # Exit status
@@ -140,7 +140,7 @@ for file in "$@"; do
     fi
 
     case "$file" in
-        *.fastq|*.fastq.gz)
+        *.fastq|*.fastq.gz|*.fq|*.fq.gz)
             check_fastq "$file" ;;
         *.bam|*.bam.gz)
             check_bam "$file" ;;
