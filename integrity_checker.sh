@@ -9,7 +9,7 @@
 #   • BAM   : inspect the first 500 header lines and verify the BAM EOF marker
 #   • CRAM  : inspect the first 500 header lines and report missing reference
 #             MD5 (M5) tags
-#   • VCF   : parse the header plus the first 10 000 variant records with
+#   • VCF po : parse the header plus the first 10 000 variant records with
 #             bcftools head
 #
 # Exit status
