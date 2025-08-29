@@ -8,8 +8,8 @@
 # Checks implemented
 #   • FASTQ : extract the first 40 000 lines and run fastQValidator
 #   • BAM   : inspect the first 500 header lines and verify the BAM EOF marker
-#   • CRAM  : inspect the first 500 header lines and report missing reference
-#             MD5 (M5) tags (warning)
+#   • CRAM  : inspect the first 500 header lines and REQUIRE reference
+#             MD5 (M5) tags (missing M5 ⇒ ERROR)
 #   • VCF   : parse the header plus the first 10 000 variant records with
 #             bcftools head (fatal parse ⇒ ERROR)
 #
@@ -100,11 +100,11 @@ check_cram() {
         err "$type" "$f" "header missing @HD/@SQ"
     fi
 
-    # Reference MD5 tags (warning if absent)
+    # Reference MD5 tags (now REQUIRED)
     if samtools view -H "$f" 2>/dev/null | grep -q 'M5:'; then
-        ok "$type" "$f" "header OK; M5 tags present"
+        ok "$type" "$f" "header OK; M5 reference MD5 tags present"
     else
-        warn "$type" "$f" "header OK; missing M5 reference MD5 tags"
+        err "$type" "$f" "header OK; missing required M5 reference MD5 tags"
     fi
 }
 
@@ -148,3 +148,4 @@ for file in "$@"; do
             warn "FILE" "$file" "unsupported extension; skipping" ;;
     esac
 done
+
