@@ -5,14 +5,14 @@ This Bash script provides lightweight and rapid integrity checks for common next
 ## Purpose
 
 - Quickly identify corrupt or improperly formatted genomic data files.
-- Ensure basic file format compliance, significantly reducing the risk of pipeline failure.
+- Ensure basic file format compliance, reducing the risk of pipeline failure.
 
 ## How it works
 
 1. Detects file type from the extension.
 2. Runs a lightweight check tailored to that format:
 
-   * **FASTQ** → sample first 40 000 lines → `fastQValidator`
+   * **FASTQ** → inspect first 40 000 lines → `fastQValidator`
    * **BAM** → header sanity check + EOF signature
    * **CRAM** → header sanity check + MD5 presence
    * **VCF/BCF** → header + first 10 000 records via `bcftools`
@@ -23,7 +23,7 @@ Each file produces a single summary line of output.
 
 ### 1. FASTQ (`.fastq`, `.fastq.gz`, `.fq`, `.fq.gz`)
 
-- Extracts the first **40,000 lines** (~10,000 reads in typical paired-end sequencing).
+- Extracts the first **40,000 lines**.
 - Performs validation using `fastQValidator` to detect critical formatting errors.
 - Output:
   - `[OK]` if validator passes
@@ -73,8 +73,8 @@ Ensure each tool is on your `$PATH`.
 ## Usage
 
 ```bash
-chmod +x quick_check.sh
-./quick_check.sh file1.fastq.gz file2.bam file3.vcf.gz
+chmod +x integrity_checker.sh
+./integrity_checker.sh file1.fastq.gz file2.bam file3.vcf.gz
 ```
 
 The script auto‑detects the format and prints status messages for each file.
@@ -102,6 +102,8 @@ A pass indicates that the *sampled portion* is valid; it does **not** guarantee 
 * Only partial validation for speed, deep‑file corruption may go unnoticed.
 * Default thresholds can be adjusted in the script:
 * Validates only selected sections of the file:
+  ```text
    *40k FASTQ lines
    *500 BAM/CRAM header lines
    *10k VCF records
+```text
